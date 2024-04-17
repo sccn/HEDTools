@@ -132,8 +132,7 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-function [EEG, fMap, com] = pop_tageeg(EEG, varargin)
-fMap = '';
+function [EEG, tags, com] = pop_tageeg(EEG, varargin)
 com = '';
 % Display help if inappropriate number of arguments
 if nargin < 1
@@ -147,78 +146,109 @@ inputArgs = getkeyvalue({'BaseMap', 'EventFieldsToIgnore' ...
         'HedXml', 'PreserveTagPrefixes'}, varargin{:});
 % Call function with menu
 if p.UseGui
-    % extract tag map from EEG. If none exists, create a new empty fMap
-    [fMap, canceled, ~] = findtags(EEG);
+    tags = findtags(EEG);
+
+    % Use CTagger to add annotations
+    [tags, canceled] = useCTagger(tags);
 
     if canceled
         fprintf('Tagging was canceled\n');
         return;
-    else
-        % if a base map is provided, merge it
-        if isfield(p, 'BaseMap')
-            fMap = mergeBaseTags(p.BaseMap, fMap);
-        end
-        
-        % Use CTagger to add annotations
-        [fMap, canceled] = useCTagger(fMap);
-
-        if canceled
-            fprintf('Tagging was canceled\n');
-            return;
-        end    
-    end
+    end    
+    
     fprintf('Tagging complete\n');
     
     % Save HED if modified
-    if fMap.getXmlEdited()
-        savehedInputArgs = getkeyvalue({'OverwriteUserHed', ...
-            'SeparateUserHedFile', 'WriteSeparateUserHedFile'}, ...
-            varargin{:});
-        [fMap, overwriteUserHed, separateUserHedFile, ...
-            writeSeparateUserHedFile] = pop_savehed(fMap, ...
-            savehedInputArgs{:});
-        savehedOutputArgs = {'OverwriteUserHed', overwriteUserHed, ...
-            'SeparateUserHedFile', separateUserHedFile, ...
-            'WriteSeparateUserHedFile', writeSeparateUserHedFile};
-        inputArgs = [inputArgs savehedOutputArgs];
-    end
+    % if fMap.getXmlEdited()
+    %     savehedInputArgs = getkeyvalue({'OverwriteUserHed', ...
+    %         'SeparateUserHedFile', 'WriteSeparateUserHedFile'}, ...
+    %         varargin{:});
+    %     [fMap, overwriteUserHed, separateUserHedFile, ...
+    %         writeSeparateUserHedFile] = pop_savehed(fMap, ...
+    %         savehedInputArgs{:});
+    %     savehedOutputArgs = {'OverwriteUserHed', overwriteUserHed, ...
+    %         'SeparateUserHedFile', separateUserHedFile, ...
+    %         'WriteSeparateUserHedFile', writeSeparateUserHedFile};
+    %     inputArgs = [inputArgs savehedOutputArgs];
+    % end
     
     % Write tags to EEG
     fprintf('Saving tags... ');
-    EEG = writetags(EEG, fMap, 'PreserveTagPrefixes', p.PreserveTagPrefixes, 'WriteIndividualTags', false); 
-    EEG = writetags(EEG, fMap, 'WriteIndividualTags', true);
+    % EEG = writetags(EEG, fMap, 'PreserveTagPrefixes', p.PreserveTagPrefixes, 'WriteIndividualTags', false); 
+    % EEG = writetags(EEG, fMap, 'WriteIndividualTags', true);
+    EEG.etc.HED = tags;
     fprintf('Done.\n');
 else % Call function without menu %if nargin > 1 && ~p.UseGui
     % extract tag map from EEG. If none exists, create a new empty fMap
-    [fMap, canceled, ~] = findtags(EEG);
+    % [fMap, canceled, ~] = findtags(EEG);
+    tags = findtags(EEG);
 
-    if canceled
-        fprintf('Tagging was canceled\n');
-        return;
-    else
-        % if a base map is provided, merge it
-        if isfield(p, 'BaseMap')
-            fMap = mergeBaseTags(p.BaseMap, fMap);
+    % if a base map is provided, merge it
+    if isfield(p, 'BaseMap')
+        if ischar(p.BaseTags)
+            base_tags = jsonread(p.BaseTags);
+        elseif isstruct(p.BaseTags)
+            base_tags = p.BaseTags;
+        else
+            base_tags = struct([]);
         end
-        % Write tags to EEG
-        fprintf('Saving tags... ');
-        EEG = writetags(EEG, fMap, 'PreserveTagPrefixes', p.PreserveTagPrefixes, 'WriteIndividualTags', false); 
-        fprintf('Done.\n');
+        tags = mergeStructures(tags, base_tags);
     end
+
+    % Write tags to EEG
+    fprintf('Saving tags... ');
+    if isfield(EEG, 'etc')
+        EEG.etc.HED = tags;
+    else
+        EEG.etc = [];
+        EEG.etc.HED = tags;
+    end
+        
+    fprintf('Done.\n');
 end
 
 com = char(['pop_tageeg(' inputname(1) ', ' logical2str(p.UseGui) ...
     ', ' keyvalue2str(inputArgs{:}) ');']);
 
 %%% Helper functions
-    %% Merge fMap with a base map
-    function fMap = mergeBaseTags(baseTags, fMap)
-        % Merge baseMap and fMap tags
-        if ~isa(baseTags, 'fieldMap')
-            baseTags = fieldMap.loadFieldMap(baseTags);
+    function tags = findtags(EEG)
+        if isfield(EEG, 'etc') 
+            if isfield(EEG.etc, 'HED')
+                tags = EEG.etc.HED;
+            else
+                tags = createEmptyHEDStructFromEvents(EEG);
+            end
+        else
+            tags = createEmptyHEDStructFromEvents(EEG);
         end
-        fMap.merge(baseTags, 'Update', {}, {});
-    end % mergeBaseTags
+    end
+    function tags = createEmptyHEDStructFromEvents(EEG)
+        event_fields = fieldnames(EEG.event);
+        tags = [];
+        for i=1:numel(event_fields)
+            tags.(event_fields{i}) = [];
+            if ischar(EEG.event(1).(event_fields{i}))
+                unique_vals = unique({EEG.event.(event_fields{i})});
+            else
+                unique_vals = unique([EEG.event.(event_fields{i})]);
+            end
+            tags.(event_fields{i}).HED = [];
+            if numel(unique_vals) < 20 % arbitrary threshold
+                for j=1:numel(unique_vals)
+                    tags.(event_fields{i}).HED.(reformatInvalidValue(unique_vals{j})) = [];
+                end
+            end
+        end
+    end
+    function value = reformatInvalidValue(value)
+        if isnumeric(value)
+            value = sprintf('x%d', value); % assume int
+        elseif ischar(value)
+            if strcmp(value, 'n/a')
+                value = 'na';
+            end
+        end
+    end
     
     %% Parse arguments
     function p = parseArguments(EEG, varargin)
@@ -249,12 +279,5 @@ com = char(['pop_tageeg(' inputname(1) ', ' logical2str(p.UseGui) ...
         parser.parse(EEG, varargin{:});
         p = parser.Results;
     end % parseArguments
-    function otherFieldsCBNo(src,event,res)
-        okBtn = findobj('tag','ok');
-        okBtn.UserData = false;
-    end
-    function otherFieldsCBYes(src,event,res)
-        src.UserData = true;
-    end
-    
+
 end % pop_tageeg
