@@ -1,0 +1,3 @@
+[submodule "hed-matlab"]
+	path = hed-matlab
+	url = https://github.com/hed-standard/hed-matlab.git
