@@ -134,6 +134,9 @@
 
 function [EEG, tags, com] = pop_tageeg(EEG, varargin)
 com = '';
+if ~exist('hed', 'var')
+    hed = getHedTools('8.2.0', 'https://hedtools.org/hed');
+end
 % Display help if inappropriate number of arguments
 if nargin < 1
     EEG = '';
@@ -146,8 +149,13 @@ inputArgs = getkeyvalue({'BaseMap', 'EventFieldsToIgnore' ...
         'HedXml', 'PreserveTagPrefixes'}, varargin{:});
 % Call function with menu
 if p.UseGui
-    tags = findtags(EEG);
-
+    if isfield(EEG, 'etc') && isfield(EEG.etc, 'HED')
+        tags = EEG.etc.HED;
+    else
+        tags = hed.getHedSidecarTemplate(EEG.event);
+    end
+    
+    % tags is a json string
     % Use CTagger to add annotations
     [tags, canceled] = useCTagger(tags);
 

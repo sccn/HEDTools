@@ -1,12 +1,12 @@
 function [tags, canceled] = useCTagger(tags)
-    json = jsonencode(tags);
-
+    % json = jsonencode(tags);
+    json = tags;
     % start CTagger
     [new_tags, canceled] = loadCTagger(json);
     
     % merge result
     if ~canceled
-        tags = mergeStructures(tags, new_tags);
+        tags = new_tags;
     end
     
     
@@ -20,9 +20,9 @@ function [tags, canceled] = useCTagger(tags)
         end
         if loader.isCanceled()
             canceled = true;
-            result = [];
+            result = '';
         else
-            result = jsondecode(char(loader.getHEDJson()));
+            result = char(loader.getHEDJson());
         end
     end
 end
