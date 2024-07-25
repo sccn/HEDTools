@@ -152,7 +152,9 @@ if p.UseGui
     if isfield(EEG, 'etc') && isfield(EEG.etc, 'HED')
         tags = EEG.etc.HED;
     else
-        tags = hed.getHedSidecarTemplate(EEG.event);
+        value_columns = {'latency'};
+        skip_columns = {'HED', 'usertags', 'hedtags'};
+        tags = hed.generateSidecar(EEG.event, value_columns, skip_columns);
     end
     
     % tags is a json string
