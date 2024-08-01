@@ -121,32 +121,29 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
-function [EEG, indices, com] = pop_epochhed(EEG, varargin)
+function [EEG, indices, com] = pop_epochhed(EEG, querystring, varargin)
+global hed
+% if ~exist('hed', 'var')
+%     hed = getHedTools('8.3.0', 'https://hedtools.org/hed');
+% end
+
 indices = [];
 com = '';
 % Display help if inappropriate number of arguments
 if nargin < 1
     help pop_epochhed;
     return;
-end;
+end
 
 p = parseArguments(EEG, varargin{:});
 
-if ~isfield(EEG,'etc') || ~isfield(EEG.etc, 'tags')
-    error('Tag summary not found in EEG.etc. Make sure you annotated the dataset first')
+if ~isfield(EEG,'etc') || ~isfield(EEG.etc, 'HED')
+    error('HED tags not found in EEG.etc. Make sure you annotated the dataset first')
 end
 % fprintf("Assembling HED annotations for events...");
-% fMap = fieldMap.createfMapFromStruct(EEG.etc.tags);
-% EEG_assembled = writetags(EEG, fMap, 'WriteIndividualTags', true);
-% EEG_assembled = eventsToLong(EEG_assembled);
+
 if nargin < 2
     
-%     uniquetags = finduniquetags(arrayfun(@concattags, EEG_assembled.event, ...
-%         'UniformOutput', false));
-%     % Get input arguments from GUI
-%     [canceled, querystring, exclusiveTags, newName, timelim, valueLim] = ...
-%         epochhed_input('newname', EEG_assembled.setname, 'querystring', ...
-%         p.querystring, 'uniquetags', uniquetags);
     uniquetags = finduniquetags(arrayfun(@concattags, EEG.event, ...
         'UniformOutput', false));
     % Get input arguments from GUI
@@ -156,9 +153,7 @@ if nargin < 2
     if canceled
         return;
     end
-%     [EEG, indices] = epochhed(EEG_assembled, querystring, 'timelim', timelim, ...
-%         'exclusivetags', exclusiveTags, 'newname', newName, 'valuelim', ...
-%         valueLim);
+
     [EEG, indices] = epochhed(EEG, querystring, 'timelim', timelim, ...
         'exclusivetags', exclusiveTags, 'newname', newName, 'valuelim', ...
         valueLim);
@@ -169,15 +164,13 @@ if nargin < 2
         '''newname'', ''' newName ''', ' ...
         '''valuelim'', ' vector2str(valueLim) ')']);
     return;
+else
+    [EEG, indices] = epochhed(EEG, querystring, varargin{:});
+    com = char(['pop_epochhed(EEG, ' ...
+        '''' querystring ''', ', ...
+        '''timelim'', ''', vector2str(p.timelim) ', '...
+        keyvalue2str(varargin{:})]);
 end
-
-% [EEG, indices] = epochhed(EEG_assembled, querystring, varargin{:});
-[EEG, indices] = epochhed(EEG, querystring, varargin{:});
-com = char(['pop_epochhed(EEG, ' ...
-    '''' querystring ''', ', ...
-    '''timelim'', ''', vector2str(timelim) ', '...
-    keyvalue2str(varargin{:})]);
-
     function p = parseArguments(EEG, varargin)
         % Parses the arguments passed in and returns the results
         p = inputParser();

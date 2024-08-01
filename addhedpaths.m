@@ -34,13 +34,17 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1.07 USA
 
-function addhedpaths(usingEEGLAB)
+function addhedpaths()
 addFolders();
-% if usingEEGLAB
-%     preserveWorkspace();
-% else
-    addJavaPaths();
-% end
+addJavaPaths();
+addHEDService();
+
+    function addHEDService()
+        % add HED service
+        global hed
+        hed = getHedTools('8.3.0', 'https://hedtools.org/hed');
+        global hed
+    end
 
     function tempDirectory = getTemporaryDirectory()
         % Returns the temporary directory on the system, if not present

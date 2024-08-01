@@ -47,7 +47,7 @@ if nargin < 3
 end
 
 % Find the path of the current directory
-addhedpaths(true);
+addhedpaths();
 
 % Find 'Memory and other options' in the figure 
 parentMenu = findobj(fig, 'Label', 'Edit', 'Type', 'uimenu');
