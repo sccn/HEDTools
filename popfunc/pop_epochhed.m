@@ -122,11 +122,8 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 function [EEG, indices, com] = pop_epochhed(EEG, querystring, varargin)
+checkHedObject();
 global hed
-% if ~exist('hed', 'var')
-%     hed = getHedTools('8.3.0', 'https://hedtools.org/hed');
-% end
-
 indices = [];
 com = '';
 % Display help if inappropriate number of arguments

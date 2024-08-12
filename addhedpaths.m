@@ -40,10 +40,8 @@ addJavaPaths();
 addHEDService();
 
     function addHEDService()
-        % add HED service
         global hed
         hed = getHedTools('8.3.0', 'https://hedtools.org/hed');
-        global hed
     end
 
     function tempDirectory = getTemporaryDirectory()

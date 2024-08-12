@@ -75,6 +75,7 @@
 function [issues, com] = pop_validateeeg(EEG, varargin)
 issues = '';
 com = '';
+checkHedObject();
 
 % Display help if inappropriate number of arguments
 if nargin < 1
@@ -96,29 +97,26 @@ if p.UseGui
         hedXML, 'outputFileDirectory', outDir, 'writeOutputToFile', ...
         p.writeOutputToFile};
     issues = validateeeg(EEG, inputArgs{:});
-end
-
-% Call function without menu
-if nargin > 1 && ~p.UseGui
+else
     inputArgs = getkeyvalue({'generateWarnings', 'hedXml', ...
         'outputFileDirectory', 'writeOutputToFile'}, varargin{:});
     issues = validateeeg(EEG, inputArgs{:});
 end
 
 com = char(['pop_validateeeg(' inputname(1) ', ' ...
-    logical2str(p.UseGui) ', ' keyvalue2str(inputArgs{:}) ');']);
+    keyvalue2str(varargin{:}) ');']);
 
     function p = parseArguments(EEG, varargin)
         % Parses the arguements passed in and returns the results
         p = inputParser();
         p.addRequired('EEG', @(x) (~isempty(x) && isstruct(x)));
-        p.addOptional('UseGui', true, @islogical);
+        p.addOptional('UseGui', false, @islogical);
         p.addParamValue('generateWarnings', false, ...
             @(x) validateattributes(x, {'logical'}, {}));
         p.addParamValue('hedXml', 'HED.xml', ...
             @(x) (~isempty(x) && ischar(x)));
         p.addParamValue('outputFileDirectory', pwd, @ischar);
-        p.addParamValue('writeOutputToFile', true, @islogical);
+        p.addParamValue('writeOutputToFile', false, @islogical);
         p.parse(EEG, varargin{:});
         p = p.Results;
     end % parseArguments

@@ -84,6 +84,7 @@
 
 function [EEG, indices, epochHedStrings] = epochhed(EEG, querystring, ...
     varargin)
+checkHedObject();
 global hed
 parsedArguments = parseArguments(EEG, querystring, varargin{:});
 eventsRect = rectify_events(EEG.event, EEG.srate);

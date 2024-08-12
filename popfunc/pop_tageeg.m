@@ -134,10 +134,8 @@
 
 function [EEG, tags, com] = pop_tageeg(EEG, varargin)
 com = '';
+checkHedObject();
 global hed
-% if ~exist('hed', 'var')
-%     hed = getHedTools('8.3.0', 'https://hedtools.org/hed');
-% end
 % Display help if inappropriate number of arguments
 if nargin < 1
     EEG = '';
