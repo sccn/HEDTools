@@ -134,8 +134,14 @@
 
 function [EEG, tags, com] = pop_tageeg(EEG, varargin)
 com = '';
+<<<<<<< HEAD
 checkHedObject();
 global hed
+=======
+if ~exist('hed', 'var')
+    hed = getHedTools('8.2.0', 'https://hedtools.org/hed');
+end
+>>>>>>> main
 % Display help if inappropriate number of arguments
 if nargin < 1
     EEG = '';
@@ -147,6 +153,7 @@ p = parseArguments(EEG, varargin{:});
 inputArgs = getkeyvalue({'BaseMap', 'EventFieldsToIgnore' ...
         'HedXml', 'PreserveTagPrefixes'}, varargin{:});
 % Call function with menu
+<<<<<<< HEAD
 if ~isempty(p.sidecar)
     if exist(p.sidecar, 'file')
         hed_json = fileread(p.sidecar);
@@ -171,12 +178,20 @@ else
         value_columns = {};
         skip_columns = {'latency', 'HED', 'usertags', 'hedtags'};
         tags = hed.generateSidecar(EEG.event, value_columns, skip_columns);
+=======
+if p.UseGui
+    if isfield(EEG, 'etc') && isfield(EEG.etc, 'HED')
+        tags = EEG.etc.HED;
+    else
+        tags = hed.getHedSidecarTemplate(EEG.event);
+>>>>>>> main
     end
     
     % tags is a json string
     % Use CTagger to add annotations
     [tags, canceled] = useCTagger(tags);
 
+<<<<<<< HEAD
     EEG.etc.HED = tags;
 
     if canceled
@@ -186,10 +201,110 @@ else
     
     fprintf('Tagging complete\n');
 end 
+=======
+    if canceled
+        fprintf('Tagging was canceled\n');
+        return;
+    end    
+    
+    fprintf('Tagging complete\n');
+    
+    % Save HED if modified
+    % if fMap.getXmlEdited()
+    %     savehedInputArgs = getkeyvalue({'OverwriteUserHed', ...
+    %         'SeparateUserHedFile', 'WriteSeparateUserHedFile'}, ...
+    %         varargin{:});
+    %     [fMap, overwriteUserHed, separateUserHedFile, ...
+    %         writeSeparateUserHedFile] = pop_savehed(fMap, ...
+    %         savehedInputArgs{:});
+    %     savehedOutputArgs = {'OverwriteUserHed', overwriteUserHed, ...
+    %         'SeparateUserHedFile', separateUserHedFile, ...
+    %         'WriteSeparateUserHedFile', writeSeparateUserHedFile};
+    %     inputArgs = [inputArgs savehedOutputArgs];
+    % end
+    
+    % Write tags to EEG
+    fprintf('Saving tags... ');
+    % EEG = writetags(EEG, fMap, 'PreserveTagPrefixes', p.PreserveTagPrefixes, 'WriteIndividualTags', false); 
+    % EEG = writetags(EEG, fMap, 'WriteIndividualTags', true);
+    EEG.etc.HED = tags;
+    fprintf('Done.\n');
+else % Call function without menu %if nargin > 1 && ~p.UseGui
+    % extract tag map from EEG. If none exists, create a new empty fMap
+    % [fMap, canceled, ~] = findtags(EEG);
+    tags = findtags(EEG);
+
+    % if a base map is provided, merge it
+    if isfield(p, 'BaseMap')
+        if ischar(p.BaseTags)
+            base_tags = jsonread(p.BaseTags);
+        elseif isstruct(p.BaseTags)
+            base_tags = p.BaseTags;
+        else
+            base_tags = struct([]);
+        end
+        tags = mergeStructures(tags, base_tags);
+    end
+
+    % Write tags to EEG
+    fprintf('Saving tags... ');
+    if isfield(EEG, 'etc')
+        EEG.etc.HED = tags;
+    else
+        EEG.etc = [];
+        EEG.etc.HED = tags;
+    end
+        
+    fprintf('Done.\n');
+end
+>>>>>>> main
 
 com = char(['pop_tageeg(' inputname(1) ', ' p.sidecar ...
     ', ' keyvalue2str(inputArgs{:}) ');']);
 
+<<<<<<< HEAD
+=======
+%%% Helper functions
+    function tags = findtags(EEG)
+        if isfield(EEG, 'etc') 
+            if isfield(EEG.etc, 'HED')
+                tags = EEG.etc.HED;
+            else
+                tags = createEmptyHEDStructFromEvents(EEG);
+            end
+        else
+            tags = createEmptyHEDStructFromEvents(EEG);
+        end
+    end
+    function tags = createEmptyHEDStructFromEvents(EEG)
+        event_fields = fieldnames(EEG.event);
+        tags = [];
+        for i=1:numel(event_fields)
+            tags.(event_fields{i}) = [];
+            if ischar(EEG.event(1).(event_fields{i}))
+                unique_vals = unique({EEG.event.(event_fields{i})});
+            else
+                unique_vals = unique([EEG.event.(event_fields{i})]);
+            end
+            tags.(event_fields{i}).HED = [];
+            if numel(unique_vals) < 20 % arbitrary threshold
+                for j=1:numel(unique_vals)
+                    tags.(event_fields{i}).HED.(reformatInvalidValue(unique_vals{j})) = [];
+                end
+            end
+        end
+    end
+    function value = reformatInvalidValue(value)
+        if isnumeric(value)
+            value = sprintf('x%d', value); % assume int
+        elseif ischar(value)
+            if strcmp(value, 'n/a')
+                value = 'na';
+            end
+        end
+    end
+    
+>>>>>>> main
     %% Parse arguments
     function p = parseArguments(EEG, varargin)
         % Parses the input arguments and returns the results
