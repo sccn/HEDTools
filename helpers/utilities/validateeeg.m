@@ -62,24 +62,22 @@
 
 function issues = validateeeg(EEG, varargin)
 p = parseArguments(EEG, varargin{:});
-issues = validate(p);
+checkHedObject();
+global hed
 
-    function issues = validate(p)
-        % Validates the eeg structure
-        if isfield(p.EEG.event, 'HED'))
-            p.issues = parseeeg(p.hedXml, p.EEG.event, p.generateWarnings);
-            p.issues = parseIssues(p.issues);
-            issues = p.issues;
-            if p.writeOutputToFile
-                writeOutputFile(p);
-            end
-        else
-            issues = '';
-            fprintf(['The HED field do not exist in' ...
-                ' the events. Please tag this dataset before' ...
-                ' running the validation.\n']);
-        end
-    end % validate
+% Validates the eeg structure
+if isfield(p.EEG, 'etc') && isfield(p.EEG.etc, 'HED')
+    issues = hed.validateEvents(p.EEG.event, p.EEG.etc.HED);
+    
+    if p.writeOutputToFile
+        writeOutputFile(p);
+    end
+else
+    issues = ['The HED field do not exist in' ...
+        ' the events. Please tag this dataset before' ...
+        ' running the validation.\n'];
+end
+
 
     function p = parseArguments(EEG, varargin)
         % Parses the arguements passed in and returns the results

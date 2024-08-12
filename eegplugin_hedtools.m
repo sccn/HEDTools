@@ -40,14 +40,14 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1.07  USA
 
 function vers = eegplugin_hedtools(fig, trystrs, catchstrs)
-vers = 'HEDTools3.3.2';
+vers = 'HEDTools4.0.0';
 % Check the number of input argumentsedit 
 if nargin < 3
     error('eegplugin_hedtools requires 3 arguments');
 end
 
 % Find the path of the current directory
-addhedpaths(true);
+addhedpaths();
 
 % Find 'Memory and other options' in the figure 
 parentMenu = findobj(fig, 'Label', 'Edit', 'Type', 'uimenu');

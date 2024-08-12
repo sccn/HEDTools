@@ -10,7 +10,7 @@
 %
 %   >>  [EEG, com] = pop_tageeg(EEG)
 %
-%   >>  [EEG, com] = pop_tageeg(EEG, UseGui, 'key1', value1 ...)
+%   >>  [EEG, com] = pop_tageeg(EEG, sidecare, 'key1', value1 ...)
 %
 %   >>  [EEG, com] = pop_tageeg(EEG, 'key1', value1 ...)
 %
@@ -134,9 +134,14 @@
 
 function [EEG, tags, com] = pop_tageeg(EEG, varargin)
 com = '';
+<<<<<<< HEAD
+checkHedObject();
+global hed
+=======
 if ~exist('hed', 'var')
     hed = getHedTools('8.2.0', 'https://hedtools.org/hed');
 end
+>>>>>>> main
 % Display help if inappropriate number of arguments
 if nargin < 1
     EEG = '';
@@ -148,17 +153,55 @@ p = parseArguments(EEG, varargin{:});
 inputArgs = getkeyvalue({'BaseMap', 'EventFieldsToIgnore' ...
         'HedXml', 'PreserveTagPrefixes'}, varargin{:});
 % Call function with menu
+<<<<<<< HEAD
+if ~isempty(p.sidecar)
+    if exist(p.sidecar, 'file')
+        hed_json = fileread(p.sidecar);
+    else
+        hed_json = p.sidecar;
+    end
+    % issues = hed.validateSidecar(hed_json);
+    issues = '';
+    if isempty(issues)
+        EEG.etc.HED = hed_json;
+        
+        fprintf('Tagging complete\n');
+    else
+        fprintf('Issues with sidecar annotations provided... \n');
+        fprintf(issues);
+        return;
+    end
+else
+    if isfield(EEG, 'etc') && isfield(EEG.etc, 'HED')
+        tags = EEG.etc.HED;
+    else
+        value_columns = {};
+        skip_columns = {'latency', 'HED', 'usertags', 'hedtags'};
+        tags = hed.generateSidecar(EEG.event, value_columns, skip_columns);
+=======
 if p.UseGui
     if isfield(EEG, 'etc') && isfield(EEG.etc, 'HED')
         tags = EEG.etc.HED;
     else
         tags = hed.getHedSidecarTemplate(EEG.event);
+>>>>>>> main
     end
     
     % tags is a json string
     % Use CTagger to add annotations
     [tags, canceled] = useCTagger(tags);
 
+<<<<<<< HEAD
+    EEG.etc.HED = tags;
+
+    if canceled
+        fprintf('Tagging was canceled\n');
+        return;
+    end    
+    
+    fprintf('Tagging complete\n');
+end 
+=======
     if canceled
         fprintf('Tagging was canceled\n');
         return;
@@ -214,10 +257,13 @@ else % Call function without menu %if nargin > 1 && ~p.UseGui
         
     fprintf('Done.\n');
 end
+>>>>>>> main
 
-com = char(['pop_tageeg(' inputname(1) ', ' logical2str(p.UseGui) ...
+com = char(['pop_tageeg(' inputname(1) ', ' p.sidecar ...
     ', ' keyvalue2str(inputArgs{:}) ');']);
 
+<<<<<<< HEAD
+=======
 %%% Helper functions
     function tags = findtags(EEG)
         if isfield(EEG, 'etc') 
@@ -258,12 +304,13 @@ com = char(['pop_tageeg(' inputname(1) ', ' logical2str(p.UseGui) ...
         end
     end
     
+>>>>>>> main
     %% Parse arguments
     function p = parseArguments(EEG, varargin)
         % Parses the input arguments and returns the results
         parser = inputParser;
         parser.addRequired('EEG', @(x) (isempty(x) || isstruct(EEG)));
-        parser.addOptional('UseGui', true, @islogical);
+        parser.addOptional('sidecar', '', @ischar);
         parser.addParamValue('BaseMap', '', @(x) isa(x, 'fieldMap') || ...
             ischar(x));
         parser.addParamValue('EventFieldsToIgnore', ...
