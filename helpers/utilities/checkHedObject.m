@@ -6,15 +6,16 @@ if isobject(hed) && isprop(hed, 'HedVersion')
     if isprop(hed, 'ServicesUrl')
         request = hed.getRequestTemplate();
         request.service = 'get_services';
-        response = webwrite(hed.ServicesUrl, request, hed.WebOptions);
-        response = jsondecode(response);
-        error_msg = HedToolsService.getResponseError(response);
-        if error_msg
-            try
-                hed = getHedTools('8.3.0', 'https://hedtools.org/hed');
-            catch
+        try
+            response = webwrite(hed.ServicesUrl, request, hed.WebOptions);
+            response = jsondecode(response);
+            error_msg = HedToolsService.getResponseError(response);
+            if error_msg
                 hasHED = false;
             end
+        catch
+            hed = getHedTools('8.3.0', 'https://hedtools.org/hed');
+            hasHED = true;
         end
     end
 end

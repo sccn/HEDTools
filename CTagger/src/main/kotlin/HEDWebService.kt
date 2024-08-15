@@ -41,26 +41,16 @@ class HEDWebService {
             }
         }
 
-<<<<<<< HEAD
         fun validateSidecar(hedSidecarString: String, schema: String = "8.3.0"): HEDWebsericeResponse {
             val server = "https://hedtools.org/hed/"
-=======
-        fun validateSidecar(hedSidecarString: String, schema: String = "8.0.0"): HEDWebsericeResponse {
-            val server = "https://hedtools.ucsd.edu/hed/"
->>>>>>> main
             val (csrfToken, cookies) = getSessionInfo(server + "services")
             val gson = GsonBuilder().setPrettyPrinting().create()
             val requestBody = gson.toJson(
                 mapOf(
                     "service" to "sidecar_validate",
                     "schema_version" to schema,
-<<<<<<< HEAD
                     "sidecar_string" to hedSidecarString,
                     "check_for_warnings" to "on"
-=======
-                    "json_string" to hedSidecarString,
-                    "check_warnings_validate" to "on"
->>>>>>> main
                 )
             )
 

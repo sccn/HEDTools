@@ -114,18 +114,13 @@ else
     % tags is a json string
     % Use CTagger to add annotations
     [tags, canceled] = useCTagger(tags);
+
+    STUDY.etc.HED = tags;
     
     if canceled
         fprintf('Tagging was canceled\n');
         return;
     end    
-
-    % save tags
-    STUDY.etc.HED = tags;
-    for i=1:numel(ALLEEG)
-        ALLEEG(i).etc.HED = tags;
-    end
-
     
     fprintf('Tagging complete\n');
 end 
