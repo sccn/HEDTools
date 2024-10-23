@@ -89,6 +89,10 @@ global hed
 parsedArguments = parseArguments(EEG, querystring, varargin{:});
 eventsRect = rectify_events(EEG.event, EEG.srate);
 issues = hed.validateEvents(eventsRect, EEG.etc.HED);
+if ~isempty(issues)
+    error('Issues found in annotation.\n%s', issues)
+end
+
 annotations = hed.getHedAnnotations(eventsRect, EEG.etc.HED);
 factors = hed.searchHed(annotations, querystring);
 indices = find(factors);
